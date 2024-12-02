@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from gtts import gTTS
 import openai
 import os
+import hashlib
 
 # Initialize FastAPI
 app = FastAPI()
@@ -122,6 +123,15 @@ os.makedirs(SAVE_PATH, exist_ok=True)
 BASE_URL = "https://fastapi-app-gx34.onrender.com"
 
 
+def generate_safe_file_name(word: str, extension="mp3"):
+    """
+    Generate a safe, unique file name using a hash.
+    """
+    hash_object = hashlib.md5(word.encode("utf-8"))
+    safe_name = hash_object.hexdigest()
+    return f"{safe_name}.{extension}"
+
+
 def generate_voice(word: str, file_name="output.mp3"):
     """
     Convert text to speech using gTTS and save the audio file locally.
@@ -140,7 +150,7 @@ async def get_voice(word: str):
         raise HTTPException(status_code=400, detail="Word parameter is required.")
     try:
         # Generate the voice file
-        file_name = f"{word}.mp3"
+        file_name = generate_safe_file_name(word)
         file_path = generate_voice(word, file_name)
 
         # Return the accessible path
