@@ -166,12 +166,17 @@ async def get_voice(word: str):
 @app.get("/files/{file_name}")
 async def get_file(file_name: str):
     """
-    Serve the saved voice file after decoding the URL.
+    Serve the saved voice file without explicitly decoding the URL.
     """
-    decoded_file_name = unquote(file_name)
-    file_path = os.path.join(SAVE_PATH, decoded_file_name)
+    # Use the file_name directly as provided in the URL
+    file_path = os.path.join(SAVE_PATH, file_name)
+
     logging.info(f"Requested file path: {file_path}")
+
+    # Check if the file exists
     if os.path.exists(file_path):
-        return FileResponse(file_path, media_type="audio/mpeg", filename=decoded_file_name)
+        logging.info(f"File found: {file_path}")
+        return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
+    
     logging.error(f"File not found: {file_path}")
     raise HTTPException(status_code=404, detail="File not found")
