@@ -139,6 +139,6 @@ async def get_voice(word: str):
         file_path = generate_voice(word, file_name)
 
         # Return the file as a response
-        return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
+        return {"success": True, "file_path": file_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
