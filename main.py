@@ -6,6 +6,7 @@ from gtts import gTTS
 import openai
 import os
 import hashlib
+import logging
 
 # Initialize FastAPI
 app = FastAPI()
@@ -132,13 +133,14 @@ def generate_safe_file_name(word: str, extension="mp3"):
     return f"{safe_name}.{extension}"
 
 
-def generate_voice(word: str, file_name="output.mp3"):
+def generate_voice(word: str, file_name: str):
     """
     Convert text to speech using gTTS and save the audio file locally.
     """
     file_path = os.path.join(SAVE_PATH, file_name)
     tts = gTTS(word, lang='ar')
     tts.save(file_path)
+    logging.info(f"Voice file saved at: {file_path}")
     return file_path
 
 @app.get("/getVoice")
@@ -152,7 +154,7 @@ async def get_voice(word: str):
         # Generate the voice file
         file_name = generate_safe_file_name(word)
         file_path = generate_voice(word, file_name)
-
+        logging.info(f"File generated successfully: {file_path}")
         # Return the accessible path
         accessible_path = f"{BASE_URL}/files/{file_name}"
         return {"success": True, "file_url": accessible_path}
