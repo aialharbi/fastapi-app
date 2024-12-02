@@ -77,7 +77,13 @@ async def get_word_forms(word: str):
 # API Endpoints
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Arabic Word Forms API!\n getWordForms?word=word \n getStems?word=word"}
+    return {
+        "message": [
+            "Welcome to the Arabic Word Forms API!",
+            "Use /getWordForms?word=word to get word forms.",
+            "Use /getStems?word=word to get stems."
+        ]
+    }
 
 @app.get("/getWordForms")
 async def get_word_forms_api_get(word: Optional[str] = None):
