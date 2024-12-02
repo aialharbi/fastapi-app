@@ -8,7 +8,8 @@ import os
 app = FastAPI()
 
 # Load OpenAI API key from environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+
 
 # Helper function to generate word forms using OpenAI API
 async def get_word_forms(word: str):
