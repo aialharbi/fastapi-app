@@ -1,6 +1,8 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
+from gtts import gTTS
 import openai
 import os
 
@@ -105,3 +107,38 @@ async def get_word_forms_api(word: str = Form(...)):
     result = await get_word_forms(word)
     word_forms = parse_response_to_json(result)
     return {"wordForms": word_forms}
+
+#######################
+#test voice
+
+# Path to save audio files (persistent disk or local directory)
+SAVE_PATH = "/var/data"
+
+# Ensure SAVE_PATH exists
+os.makedirs(SAVE_PATH, exist_ok=True)
+
+def generate_voice(word: str, file_name="output.mp3"):
+    """
+    Convert text to speech using gTTS and save the audio file locally.
+    """
+    file_path = os.path.join(SAVE_PATH, file_name)
+    tts = gTTS(word, lang='ar')
+    tts.save(file_path)
+    return file_path
+
+@app.get("/getVoice")
+async def get_voice(word: str):
+    """
+    Generate and save the voice file for the given word, then return a downloadable link.
+    """
+    if not word:
+        raise HTTPException(status_code=400, detail="Word parameter is required.")
+    try:
+        # Generate the voice file
+        file_name = f"{word}.mp3"  # Use the word for the file name
+        file_path = generate_voice(word, file_name)
+
+        # Return the file as a response
+        return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
