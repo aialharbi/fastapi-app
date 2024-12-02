@@ -7,7 +7,6 @@ import openai
 import os
 import hashlib
 import logging
-import unquote
 
 # Initialize FastAPI
 app = FastAPI()
