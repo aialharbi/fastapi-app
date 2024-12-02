@@ -7,6 +7,7 @@ import openai
 import os
 import hashlib
 import logging
+import unquote
 
 # Initialize FastAPI
 app = FastAPI()
@@ -160,3 +161,17 @@ async def get_voice(word: str):
         return {"success": True, "file_url": accessible_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
+
+
+@app.get("/files/{file_name}")
+async def get_file(file_name: str):
+    """
+    Serve the saved voice file after decoding the URL.
+    """
+    decoded_file_name = unquote(file_name)
+    file_path = os.path.join(SAVE_PATH, decoded_file_name)
+    logging.info(f"Requested file path: {file_path}")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="audio/mpeg", filename=decoded_file_name)
+    logging.error(f"File not found: {file_path}")
+    raise HTTPException(status_code=404, detail="File not found")
