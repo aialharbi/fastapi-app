@@ -40,6 +40,16 @@ async def get_word_forms(word: str):
 async def root():
     return {"message": "Welcome to the Arabic Word Forms API!"}
 
+@app.get("/getWordForms")
+async def get_word_forms_api_get(word: Optional[str] = None):
+    if not word:
+        raise HTTPException(status_code=400, detail="Please provide a word as a query parameter")
+
+    # Call the existing logic
+    result = await get_word_forms(word)
+    return {"wordForms": result}
+
+
 @app.post("/getWordForms")
 async def get_word_forms_api(word: str = Form(...)):
     if not word:
