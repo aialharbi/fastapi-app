@@ -10,6 +10,38 @@ app = FastAPI()
 # Load OpenAI API key from environment variables
 openai.api_key = os.environ.get('OPENAI_API_KEY')
 
+def parse_response_to_json(response_text):
+    """
+    Parses a plain-text response to create a JSON structure that adheres to the client's format.
+    Handles the corrected structure where 'wordForms' contains an array of objects.
+    """
+    word_forms = []
+
+    for line in response_text.strip().split("\n"):
+        parts = line.split(":")
+        if len(parts) < 2:  # Skip malformed lines without a colon
+            continue
+
+        form = parts[0].strip("- ").strip()  # Extract the form
+        attributes = [attr.strip() for attr in parts[1].split(",")]
+
+        # Ensure there are 5 attributes (aspect, gender, number, person, voice)
+        if len(attributes) != 5:
+            continue
+
+        word_forms.append({
+            "formRepresentations": [
+                {"form": form}
+            ],
+            "aspect": attributes[0],          # P, S, or F
+            "gender": attributes[1],         # m or f
+            "numberWordForm": attributes[2], # 1, 2, or 3
+            "person": attributes[3],         # 1, 2, or 3
+            "voice": attributes[4]           # a or p
+        })
+
+    return {"wordForms": word_forms}
+
 
 # Helper function to generate word forms using OpenAI API
 async def get_word_forms(word: str):
@@ -24,10 +56,16 @@ async def get_word_forms(word: str):
 
     Provide the output in a plain text list format, one form per line, as follows:
     - <word>: <tense>, <gender>, <number>, <person>, <voice>
-    """
+
+    For example:
+    - ضحك: P, m, 1, 3, a
+    - ضحكت: P, f, 1, 3, a
+    - يضحك: S, m, 1, 3, a
+        """
     try:
+        # Request completion from GPT-4
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4000,
             temperature=0,
@@ -48,7 +86,8 @@ async def get_word_forms_api_get(word: Optional[str] = None):
 
     # Call the existing logic
     result = await get_word_forms(word)
-    return {"wordForms": result}
+    word_forms = parse_response_to_json(result)
+    return {"wordForms": word_forms}
 
 
 @app.post("/getWordForms")
@@ -58,4 +97,5 @@ async def get_word_forms_api(word: str = Form(...)):
     
     # Fetch word forms using the helper function
     result = await get_word_forms(word)
-    return {"wordForms": result}
+    word_forms = parse_response_to_json(result)
+    return {"wordForms": word_forms}
