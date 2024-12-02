@@ -117,6 +117,11 @@ SAVE_PATH = "/var/data"
 # Ensure SAVE_PATH exists
 os.makedirs(SAVE_PATH, exist_ok=True)
 
+
+# Base URL for your service (adjust for your deployment environment)
+BASE_URL = "https://fastapi-app-gx34.onrender.com"
+
+
 def generate_voice(word: str, file_name="output.mp3"):
     """
     Convert text to speech using gTTS and save the audio file locally.
@@ -129,16 +134,17 @@ def generate_voice(word: str, file_name="output.mp3"):
 @app.get("/getVoice")
 async def get_voice(word: str):
     """
-    Generate and save the voice file for the given word, then return a downloadable link.
+    Generate and return an accessible path to the voice file.
     """
     if not word:
         raise HTTPException(status_code=400, detail="Word parameter is required.")
     try:
         # Generate the voice file
-        file_name = f"{word}.mp3"  # Use the word for the file name
+        file_name = f"{word}.mp3"
         file_path = generate_voice(word, file_name)
 
-        # Return the file as a response
-        return {"success": True, "file_path": file_path}
+        # Return the accessible path
+        accessible_path = f"{BASE_URL}/files/{file_name}"
+        return {"success": True, "file_url": accessible_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
