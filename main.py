@@ -218,15 +218,6 @@ def generate_audio_link(form):
     file_path = generate_voice(form, file_name)
     return f"{BASE_URL}/files/{file_name}"
 
-# Example usage
-response_text = """
-- ض ر ب; dˤa-ra-ba; Standard Arabic; root
-- ضرب; daraba; Egyptian Arabic; root
-"""
-
-parsed_output = parse_stems_response_with_audio(response_text, generate_audio_link)
-print(parsed_output)
-
 
 # Helper function to generate word forms using OpenAI API
 async def getStems(word: str):
