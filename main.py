@@ -236,7 +236,7 @@ async def getStems(word: str):
     - ض ر ب; dˤa-ra-ba; Standard Arabic; root
     - ضرب; daraba; Egyptian Arabic; root
 
-    Ensure each attribute is provided for every stem, and ensure there are no missing fields. Do not include JSON formatting in your response.
+    Ensure each attribute is provided for every stem, and ensure there are no missing fields.
     """
     try:
         # Request completion from GPT-4
@@ -246,6 +246,7 @@ async def getStems(word: str):
             max_tokens=4000,
             temperature=0,
         )
+        return response.choices[0].message['content']
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
