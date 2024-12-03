@@ -140,42 +140,42 @@ def generate_voice(word: str, file_name: str):
     logging.info(f"Voice file saved at: {file_path}")
     return file_path
 
-# @app.get("/getVoice")
-# async def get_voice(word: str):
-#     """
-#     Generate and return an accessible path to the voice file.
-#     """
-#     if not word:
-#         raise HTTPException(status_code=400, detail="Word parameter is required.")
-#     try:
-#         # Generate the voice file
-#         file_name = generate_safe_file_name(word)
-#         file_path = generate_voice(word, file_name)
-#         logging.info(f"File generated successfully: {file_path}")
-#         # Return the accessible path
-#         accessible_path = f"{BASE_URL}/files/{file_name}"
-#         return {"success": True, "file_url": accessible_path}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
+@app.get("/getVoice")
+async def get_voice(word: str):
+    """
+    Generate and return an accessible path to the voice file.
+    """
+    if not word:
+        raise HTTPException(status_code=400, detail="Word parameter is required.")
+    try:
+        # Generate the voice file
+        file_name = generate_safe_file_name(word)
+        file_path = generate_voice(word, file_name)
+        logging.info(f"File generated successfully: {file_path}")
+        # Return the accessible path
+        accessible_path = f"{BASE_URL}/files/{file_name}"
+        return {"success": True, "file_url": accessible_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating voice: {str(e)}")
 
 
-# @app.get("/files/{file_name}")
-# async def get_file(file_name: str):
-#     """
-#     Serve the saved voice file without explicitly decoding the URL.
-#     """
-#     # Use the file_name directly as provided in the URL
-#     file_path = os.path.join(SAVE_PATH, file_name)
+@app.get("/files/{file_name}")
+async def get_file(file_name: str):
+    """
+    Serve the saved voice file without explicitly decoding the URL.
+    """
+    # Use the file_name directly as provided in the URL
+    file_path = os.path.join(SAVE_PATH, file_name)
 
-#     logging.info(f"Requested file path: {file_path}")
+    logging.info(f"Requested file path: {file_path}")
 
-#     # Check if the file exists
-#     if os.path.exists(file_path):
-#         logging.info(f"File found: {file_path}")
-#         return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
+    # Check if the file exists
+    if os.path.exists(file_path):
+        logging.info(f"File found: {file_path}")
+        return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
     
-#     logging.error(f"File not found: {file_path}")
-#     raise HTTPException(status_code=404, detail="File not found")
+    logging.error(f"File not found: {file_path}")
+    raise HTTPException(status_code=404, detail="File not found")
 
 ##########
 # second api
