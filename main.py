@@ -198,7 +198,7 @@ def parse_stems_response_with_audio(response_text: str, audio_generator):
         form, phonetic, dialect, root_type = map(str.strip, parts)
 
         # Generate the audio link using the external method
-        audio_link = audio_generator(form, dialect)
+        audio_link = audio_generator(form)
 
         stems.append({
             "formRepresentations": {
