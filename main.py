@@ -15,10 +15,7 @@ app = FastAPI()
 openai.api_key = os.environ.get('OPENAI_API_KEY')
 
 def parse_response_to_json(response_text):
-    """
-    Parses a plain-text response to create a JSON structure that adheres to the client's format.
-    Handles the corrected structure where 'wordForms' contains an array of objects.
-    """
+
     word_forms = []
 
     for line in response_text.strip().split("\n"):
@@ -179,3 +176,97 @@ async def get_file(file_name: str):
     
     logging.error(f"File not found: {file_path}")
     raise HTTPException(status_code=404, detail="File not found")
+
+##########
+# second api
+
+def parse_stems_response_with_audio(response_text: str, audio_generator):
+    """
+    Parses a plain-text response of stems into a JSON-like structure, 
+    adding audio links from an external method.
+    """
+    stems = []
+    for line in response_text.strip().split("\n"):
+        if not line.strip() or not line.startswith("-"):
+            continue  # Skip empty or invalid lines
+
+        # Remove the dash and split the attributes
+        parts = line.strip("- ").split(";")
+        if len(parts) < 4:
+            continue  # Skip malformed lines
+
+        form, phonetic, dialect, root_type = map(str.strip, parts)
+
+        # Generate the audio link using the external method
+        audio_link = audio_generator(form, dialect)
+
+        stems.append({
+            "formRepresentations": {
+                "form": form,
+                "phonetic": phonetic,
+                "dialect": dialect,
+                "audio": audio_link  # Add the generated audio link
+            },
+            "type": root_type
+        })
+
+    return {"stems": stems}
+
+# Example external audio generator method
+def generate_audio_link(form):
+    file_name = generate_safe_file_name(form)
+    file_path = generate_voice(form, file_name)
+    return f"{BASE_URL}/files/{file_name}"
+
+# Example usage
+response_text = """
+- ض ر ب; dˤa-ra-ba; Standard Arabic; root
+- ضرب; daraba; Egyptian Arabic; root
+"""
+
+parsed_output = parse_stems_response_with_audio(response_text, generate_audio_link)
+print(parsed_output)
+
+
+# Helper function to generate word forms using OpenAI API
+async def getStems(word: str):
+    prompt = f"""
+    Please generate all stems (roots) for the Arabic word: {word}.
+    The response should include the following information for each stem:
+    - The root written in Arabic (form).
+    - The phonetic transcription (phonetic) of the root.
+    - The dialect (e.g., "Standard Arabic", "Egyptian Arabic").
+    - The type of the root, which should always be "root".
+
+    Provide the output in a plain text list format, where each stem is on a new line and attributes are separated by semicolons (;), as follows:
+    <root in Arabic>; <phonetic transcription>; <dialect>; <type>
+
+    Here is an example for the input word "ضرب":
+    - ض ر ب; dˤa-ra-ba; Standard Arabic; root
+    - ضرب; daraba; Egyptian Arabic; root
+
+    Ensure each attribute is provided for every stem, and ensure there are no missing fields. Do not include JSON formatting in your response.
+    """
+    try:
+        # Request completion from GPT-4
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=4000,
+            temperature=0,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+
+@app.get("/getStems")
+async def get_getStems_api_get(word: Optional[str] = None):
+    if not word:
+        raise HTTPException(status_code=400, detail="Please provide a word as a query parameter")
+
+    # Call the existing logic
+    result = await getStems(word)
+    url_audio = generate_audio_link(word)
+    stems = parse_stems_response_with_audio(result,url_audio)
+    return {"wordForms": stems}
