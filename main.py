@@ -198,14 +198,14 @@ def parse_stems_response_with_audio(response_text: str, audio_generator):
         form, phonetic, dialect, root_type = map(str.strip, parts)
 
         # Generate the audio link using the external method
-        audio_link = audio_generator(form)
+        # audio_link = audio_generator(form)
 
         stems.append({
             "formRepresentations": {
                 "form": form,
                 "phonetic": phonetic,
                 "dialect": dialect,
-                "audio": audio_link  # Add the generated audio link
+                "audio": audio_generator  # Add the generated audio link
             },
             "type": root_type
         })
@@ -239,7 +239,7 @@ async def getStems(word: str):
     Ensure each attribute is provided for every stem, and ensure there are no missing fields.
     """
     try:
-        # Request completion from GPT-4
+        # Request completion from GPT-40
         response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
