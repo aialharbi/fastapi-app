@@ -260,7 +260,7 @@ async def get_getStems_api_get(word: Optional[str] = None):
 
     # Call the existing logic
     result = await getStems(word)
-    url_audio = generate_audio_link(word)
+    url_audio = await generate_audio_link(word)
     # url_audio = 'test.mp3'
     stems = parse_stems_response_with_audio(result,url_audio)
     return {"wordForms": stems}
