@@ -7,6 +7,7 @@ import openai
 import os
 import hashlib
 import logging
+import asyncio 
 
 # Initialize FastAPI
 app = FastAPI()
@@ -130,14 +131,14 @@ def generate_safe_file_name(word: str, extension="mp3"):
     return f"{safe_name}.{extension}"
 
 
-def generate_voice(word: str, file_name: str):
+async def generate_voice(word: str, file_name: str):
     """
     Convert text to speech using gTTS and save the audio file locally.
     """
     file_path = os.path.join(SAVE_PATH, file_name)
+    await asyncio.sleep(1)  # Simulated async operation
     tts = gTTS(word, lang='ar')
     tts.save(file_path)
-    logging.info(f"Voice file saved at: {file_path}")
     return file_path
 
 @app.get("/getVoice")
@@ -213,9 +214,9 @@ def parse_stems_response_with_audio(response_text: str, audio_generator):
     return {"stems": stems}
 
 # Example external audio generator method
-def generate_audio_link(form):
+async def generate_audio_link(form):
     file_name = generate_safe_file_name(form)
-    file_path = generate_voice(form, file_name)
+    file_path = await generate_voice(form, file_name)
     return f"{BASE_URL}/files/{file_name}"
 
 
