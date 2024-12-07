@@ -65,7 +65,7 @@ def generate_audio_for_form(form: str) -> Optional[str]:
 
         # Replace this with your TTS client call
         response = client.audio.speech.create(
-            model="tts-1-hd",
+            model="tts-1",
             voice="alloy",
             input=form
         )
