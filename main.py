@@ -84,7 +84,7 @@ def generate_audio_for_form(form: str) -> Optional[str]:
         return "null"
 
 
-####### Emg. Abdullah's code -- No changes ########
+####### Eng. Abdullah's code -- No changes except ->>> 1) phontic prompt 
 
 
 def parse_response_to_json(response_text, endpoint_type):
@@ -647,7 +647,7 @@ async def get_definition(word: str):
 
 
 @app.get("/getSenseTranslation")
-async def get_sense_translation(word: str, session):
+async def get_sense_translation(word: str):
     """
     Endpoint to fetch translations for the given Arabic word.
     """
