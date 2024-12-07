@@ -84,6 +84,9 @@ def generate_audio_for_form(form: str) -> Optional[str]:
         return "null"
 
 
+####### Emg. Abdullah's code -- No changes ########
+
+
 def parse_response_to_json(response_text, endpoint_type):
     """
     Parses a plain-text response into JSON format based on the endpoint type.
@@ -549,7 +552,7 @@ async def get_phonetic_api(word: str):
     prompt = f"""
         Provide the phonetic representation of the Arabic word '{word}'.
          start with verbs phonetics and if the word not a verb return the noun phonetic nothing else 
-        Make sure to Give me a very short and simple answer."""
+        Make sure to ONLY Give the phonetic representation"""
     result = await generate_response_from_gpt(prompt)
 
     # Parse the OpenAI response
@@ -757,6 +760,12 @@ async def get_contexts(word: str):
 
     # Return the parsed response
     return parsed_response
+
+
+
+
+
+############ Need to get the file from render ########
 
 
 
