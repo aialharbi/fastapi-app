@@ -27,6 +27,7 @@ os.makedirs(SAVE_PATH, exist_ok=True)
 # Base URL for your service (adjust for your deployment environment)
 BASE_URL = "https://fastapi-app-gx34.onrender.com"
 
+
 def generate_safe_file_name(word: str, extension="mp3"):
     """
     Generate a safe, unique file name using a hash.
@@ -36,7 +37,7 @@ def generate_safe_file_name(word: str, extension="mp3"):
     unique_number = f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     return f"{safe_name}_{unique_number}.{extension}"
 
-def generate_audio_for_form(form: str) -> Optional[str]:
+async def generate_audio_for_form(form: str) -> Optional[str]:
     try:
         client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         # Log the form being processed
@@ -157,7 +158,7 @@ def parse_response_to_json(response_text, endpoint_type):
                     print(
                         f"Skipping line due to insufficient attributes: {line}")
                     continue
-                audio_url = generate_audio_for_form(form)
+                audio_url = await generate_audio_for_form(form)
                 # append attributes into stems
                 stems.append({
                     "formRepresentations": {
