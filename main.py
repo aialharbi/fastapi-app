@@ -551,8 +551,10 @@ async def get_phonetic_api(word: str):
 
     prompt = f"""
         Provide the phonetic representation of the Arabic word '{word}'.
-         start with verbs phonetics and if the word not a verb return the noun phonetic nothing else 
-        Make sure to ONLY Give the phonetic representation"""
+        If the word is a verb, return the verb's phonetic.
+        If the word is not a verb, return the noun's phonetic.
+        Give only the phonetic representation and nothing else.
+        """
     result = await generate_response_from_gpt(prompt)
 
     # Parse the OpenAI response
