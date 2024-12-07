@@ -484,27 +484,19 @@ async def get_word_forms_api(word: str):
     prompt = f"""
         Please generate all word forms for the Arabic word: {word}.
         The response should include variations based on the following criteria:
-        - Start with singular (المفرد), followed by dual (التثنية), and then plural (الجمع).
-        - For each category (singular, dual, plural), list forms by gender: Masculine (m) first, then Feminine (f).
-        - Ensure the forms are arranged logically based on their grammatical output.
-
-        The response should include variations based on the following detailed criteria:
         - Tense: Past (P), Present (S), or Future (F).
         - Gender: Masculine (m) or Feminine (f).
         - Number: Singular (1), Dual (2), or Plural (3).
         - Person: First person (1), Second person (2), or Third person (3).
         - Voice: Active (a) or Passive (p).
-        - make sure to Diacritize the words 
 
-        Provide the output in a plain text list format, sorted as described above, with one form per line, as follows:
+        Provide the output in a plain text list format, one form per line, as follows:
         - <word>: <tense>, <gender>, <number>, <person>, <voice>
 
         For example:
-        - ضحك: P, m, 1, 3, a
-        - ضحكت: P, f, 1, 3, a
-        - ضحكا: P, m, 2, 3, a
-        - ضحكتا: P, f, 2, 3, a
-        - يضحك: S, m, 1, 3, a
+        - ضَحَكَ: P, m, 1, 3, a
+        - ضَحَكَت: P, f, 1, 3, a
+        - يَضْحَك: S, m, 1, 3, a
         """
 
     # Request GPT response
