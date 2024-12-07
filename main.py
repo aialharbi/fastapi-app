@@ -37,6 +37,7 @@ def generate_safe_file_name(word: str, extension="mp3"):
 
 def generate_audio_for_form(form: str) -> Optional[str]:
     try:
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
         # Log the form being processed
         print(f"Generating audio for form: {form}")
 
