@@ -1,3 +1,4 @@
-fastapi==0.115.5
-openai==1.57.0
+fastapi[all]
 gtts
+openai==1.57.0
+uvicorn==0.32.1
