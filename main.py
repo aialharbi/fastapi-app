@@ -8,6 +8,7 @@ import os
 import hashlib
 import logging
 import asyncio
+import datetime
 
 # Initialize FastAPI
 app = FastAPI()
@@ -25,7 +26,14 @@ os.makedirs(SAVE_PATH, exist_ok=True)
 # Base URL for your service (adjust for your deployment environment)
 BASE_URL = "https://fastapi-app-gx34.onrender.com"
 
-
+def generate_safe_file_name(word: str, extension="mp3"):
+    """
+    Generate a safe, unique file name using a hash.
+    """
+    hash_object = hashlib.md5(word.encode("utf-8"))
+    safe_name = hash_object.hexdigest()
+    unique_number = f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    return f"{safe_name}_{unique_number}.{extension}"
 
 def generate_audio_for_form(form: str) -> Optional[str]:
     try:
@@ -47,15 +55,10 @@ def generate_audio_for_form(form: str) -> Optional[str]:
         print(f"Input for TTS: {tts_input}")
 
         # Base URL for the audio files
-        url_base = os.getenv("AUDIO_URL_BASE", "http://example.com/audio/")
+        file_name = generate_safe_file_name(form)
+        speech_file_path = os.path.join(SAVE_PATH, file_name) # env saved file  
+        audio_url = f"{BASE_URL}/files/{file_name}" # an accessible path to the voice file
 
-        # Construct sanitized file name and path
-        sanitized_form = form.replace(" ", "_")
-        speech_file_path = Path(f"data/audio/{sanitized_form}.mp3")
-        audio_url = f"{url_base}{sanitized_form}.mp3"
-
-        # Ensure the directory exists
-        speech_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Replace this with your TTS client call
         response = client.audio.speech.create(
