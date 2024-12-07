@@ -65,7 +65,7 @@ def generate_audio_for_form(form: str) -> Optional[str]:
 
         # Replace this with your TTS client call
         response = client.audio.speech.create(
-            model="tts-1",
+            model="tts-1-hd",
             voice="alloy",
             input=form
         )
@@ -216,14 +216,14 @@ def parse_response_to_json(response_text, endpoint_type):
 
                 # Extract attributes
                 form, dialect, phonetic, audio = map(str.strip, attributes)
-
+                audio_url = generate_audio_for_form(form)
                 if line_type == "Statement":
                     # Parse the statement
                     definition["statement"] = {
                         "form": form,
                         "dialect": dialect,
                         "phonetic": phonetic,
-                        "audio": audio
+                        "audio": audio_url
                     }
                 elif line_type == "TextRepresentation":
                     # Parse the text representation
@@ -231,7 +231,7 @@ def parse_response_to_json(response_text, endpoint_type):
                         "form": form,
                         "dialect": dialect,
                         "phonetic": phonetic,
-                        "audio": audio
+                        "audio": audio_url
                     })
 
             except Exception as e:
