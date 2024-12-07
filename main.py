@@ -15,8 +15,6 @@ app = FastAPI()
 # Load OpenAI API key from environment variables
 openai.api_key = os.environ.get('OPENAI_API_KEY')
 
-#######################
-#test voice
 
 # Path to save audio files (persistent disk or local directory)
 SAVE_PATH = "/var/data"
@@ -27,6 +25,371 @@ os.makedirs(SAVE_PATH, exist_ok=True)
 # Base URL for your service (adjust for your deployment environment)
 BASE_URL = "https://fastapi-app-gx34.onrender.com"
 
+
+
+def generate_audio_for_form(form: str) -> Optional[str]:
+    try:
+        # Log the form being processed
+        print(f"Generating audio for form: {form}")
+
+        # Validate the input
+        if not form or not isinstance(form, str):
+            raise ValueError(f"Invalid form: {form}")
+
+        # Check if the form contains spaces to determine reading mode
+        if " " in form:
+            # If spaced, interpret each letter separately
+            tts_input = " ".join(form.split())
+        else:
+            # If no spaces, interpret as a normal word
+            tts_input = form
+
+        print(f"Input for TTS: {tts_input}")
+
+        # Base URL for the audio files
+        url_base = os.getenv("AUDIO_URL_BASE", "http://example.com/audio/")
+
+        # Construct sanitized file name and path
+        sanitized_form = form.replace(" ", "_")
+        speech_file_path = Path(f"data/audio/{sanitized_form}.mp3")
+        audio_url = f"{url_base}{sanitized_form}.mp3"
+
+        # Ensure the directory exists
+        speech_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Replace this with your TTS client call
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice="alloy",
+            input=form
+        )
+
+        # Save the MP3 file to the specified path
+        with open(speech_file_path, "wb") as f:
+            f.write(response.content)
+
+        # Return the audio file's URL
+        print(f"Audio successfully generated: {audio_url}")
+        return audio_url
+
+    except Exception as e:
+        # Log any error and return "null" as a fallback
+        print(f"Error generating audio for {form}: {e}")
+        return "null"
+
+
+def parse_response_to_json(response_text, endpoint_type):
+    """
+    Parses a plain-text response into JSON format based on the endpoint type.
+    Ensures consistent formatting by removing unnecessary numbering or extra text.
+    """
+
+    print(f"{endpoint_type}_RESPONSE: %s" % response_text)
+    if endpoint_type == "wordForms":
+        word_forms = []
+
+        for line in response_text.strip().split("\n"):
+            parts = line.split(":")
+            if len(parts) < 2:  # Skip malformed lines without a colon
+                continue
+
+            # Extract the form and remove numbering if present
+            form = parts[0].strip("- ").strip()
+            if form[0].isdigit() and form[1] in [".", " "]:
+                # Remove leading numbers like "1. "
+                form = form.split(".", 1)[1].strip()
+
+            attributes = [attr.strip() for attr in parts[1].split(",")]
+
+            # Ensure there are 5 attributes (aspect, gender, number, person, voice)
+            if len(attributes) != 5:
+                continue
+
+            word_forms.append({
+                "formRepresentations": {
+                    "form": form,
+                    "aspect": attributes[0],          # P, S, or F
+                    "gender": attributes[1],         # m or f
+                    "numberWordForm": attributes[2],  # 1, 2, or 3
+                    "person": attributes[3],         # 1, 2, or 3
+                    "voice": attributes[4]           # a or p
+                },
+            })
+
+        return {"wordForms": word_forms}
+
+    elif endpoint_type == "dialect":
+        return {"dialect": response_text.strip()}
+
+    elif endpoint_type == "phonetic":
+        return {"phonetic": response_text.strip()}
+
+    elif endpoint_type == "stems":
+        stems = []
+
+        for line in response_text.strip().split("\n"):
+            # Skip empty or malformed lines
+            if not line.strip() or ":" not in line:
+                print(f"Skipping line due to missing ':' separator: {line}")
+                continue
+
+            try:
+                # Split the line into form and attributes
+                parts = line.split(":", 1)
+                form = parts[0].strip("- ").strip()  # Extract the form
+
+                # Extract attributes using maxsplit to avoid splitting inside the audio URL
+                raw_attributes = parts[1].strip()
+                attributes = raw_attributes.split(
+                    ",", maxsplit=3)  # Limit splitting to 3 parts
+
+                # Debugging attributes
+                print(f"Parsing line: {line}")
+                print(f"Extracted attributes: {attributes}")
+
+                # Ensure there are at least 3 attributes (phonetic, dialect, type)
+                if len(attributes) < 3:
+                    print(
+                        f"Skipping line due to insufficient attributes: {line}")
+                    continue
+                audio_url = generate_audio_for_form(form)
+                # append attributes into stems
+                stems.append({
+                    "formRepresentations": {
+                        "form": form,
+                        "phonetic": attributes[0].strip(),
+                        "dialect": attributes[1].strip(),
+                        "audio": audio_url
+                    },
+                    # Type (e.g., stem, derived, inflection)
+                    "type": attributes[3].strip()
+                })
+
+            except Exception as e:
+                # Log the error and skip the malformed line
+                print(f"Error processing line: {line} - Error: {e}")
+                continue
+
+        return {"stems": stems}
+
+    if endpoint_type == "definition":
+        response_text = response_text.replace("،", ",")
+        definition = {
+            "statement": None,
+            "textRepresentations": []
+        }
+
+        for line in response_text.strip().split("\n"):
+            # Skip empty or malformed lines
+            if not line.strip() or ":" not in line:
+                print(f"Skipping malformed line: {line}")
+                continue
+
+            try:
+                # Remove leading '- ' and strip whitespace
+                line = line.lstrip("- ").strip()
+
+                # Split into type (Statement or TextRepresentation) and the rest
+                type_and_fields = line.split(":", 1)
+                if len(type_and_fields) != 2:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                line_type, fields = type_and_fields[0].strip(
+                ), type_and_fields[1].strip()
+
+                # Split fields from the right into 4 parts
+                attributes = fields.rsplit(",", 3)
+                if len(attributes) != 4:
+                    print(
+                        f"Skipping malformed line due to insufficient attributes: {line}")
+                    continue
+
+                # Extract attributes
+                form, dialect, phonetic, audio = map(str.strip, attributes)
+
+                if line_type == "Statement":
+                    # Parse the statement
+                    definition["statement"] = {
+                        "form": form,
+                        "dialect": dialect,
+                        "phonetic": phonetic,
+                        "audio": audio
+                    }
+                elif line_type == "TextRepresentation":
+                    # Parse the text representation
+                    definition["textRepresentations"].append({
+                        "form": form,
+                        "dialect": dialect,
+                        "phonetic": phonetic,
+                        "audio": audio
+                    })
+
+            except Exception as e:
+                print(f"Error processing line: {line} - {e}")
+                continue
+
+        return {"definition": definition}
+    if endpoint_type == "translations":
+        translations = []
+
+        for line in response_text.strip().split("\n"):
+            # Skip empty or malformed lines
+            if not line.strip() or ":" not in line:
+                print(f"Skipping malformed line: {line}")
+                continue
+
+            try:
+                # Remove the leading '- ' if present
+                line = line.lstrip("- ").strip()
+
+                # Split into type and fields
+                parts = line.split(":", 1)
+                if len(parts) != 2:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract fields
+                language = parts[0].strip()
+                fields = parts[1].strip()
+
+                # Split fields from the right into 4 parts
+                attributes = fields.rsplit(",", 3)
+                if len(attributes) != 4:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract attributes
+                form, phonetic, dialect, audio = map(str.strip, attributes)
+                audio_url = generate_audio_for_form(form)
+
+                # Append the parsed translation
+                translations.append({
+                    "language": language,
+                    "form": form,
+                    "phonetic": phonetic,
+                    "dialect": dialect,
+                    "audio": audio_url
+                })
+
+            except Exception as e:
+                print(f"Error processing line: {line} - {e}")
+                continue
+
+        return {"translations": translations}
+    if endpoint_type == "examples":
+        examples = []
+
+        for line in response_text.strip().split("\n"):
+            # Skip empty or malformed lines
+            if not line.strip() or ":" not in line:
+                print(f"Skipping malformed line: {line}")
+                continue
+
+            try:
+                # Remove the leading '- ' if present
+                line = line.lstrip("- ").strip()
+
+                # Split into fields
+                parts = line.split(":", 1)
+                if len(parts) != 2:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract fields
+                form = parts[0].strip()
+                fields = parts[1].strip()
+
+                # Split fields from the right into 5 parts
+                attributes = fields.rsplit(",", 5)
+                if len(attributes) != 6:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract attributes
+                phonetic, dialect, audio, example_type, show_in_results, source = map(
+                    str.strip, attributes)
+
+                # Convert showInResults to boolean
+                show_in_results = show_in_results.lower() == "true"
+                audio_url = generate_audio_for_form(form)
+
+                # Append the parsed example
+                examples.append({
+                    "form": form,
+                    "phonetic": phonetic,
+                    "dialect": dialect,
+                    "audio": audio_url,
+                    "exampleType": example_type,
+                    "showInResults": show_in_results,
+                    "source": source
+                })
+
+            except Exception as e:
+                print(f"Error processing line: {line} - {e}")
+                continue
+
+        return {"examples": examples}
+    if endpoint_type == "contexts":
+        contexts = []
+
+        for line in response_text.strip().split("\n"):
+            # Skip empty or malformed lines
+            if not line.strip() or ":" not in line:
+                print(f"Skipping malformed line: {line}")
+                continue
+
+            try:
+                # Remove the leading '- ' if present
+                line = line.lstrip("- ").strip()
+
+                # Split into fields
+                parts = line.split(":", 1)
+                if len(parts) != 2:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract fields
+                form = parts[0].strip()
+                fields = parts[1].strip()
+
+                # Split fields from the right into 5 parts
+                attributes = fields.rsplit(",", 5)
+                if len(attributes) != 6:
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                # Extract attributes
+                phonetic, dialect, audio, index, record_id, show_in_results = map(
+                    str.strip, attributes)
+
+                # Convert `index` and `recordId` to integers
+                index = int(index)
+                record_id = int(record_id)
+
+                # Convert showInResults to boolean
+                show_in_results = show_in_results.lower() == "true"
+                audio_url = generate_audio_for_form(form)
+
+                # Append the parsed context
+                contexts.append({
+                    "form": form,
+                    "phonetic": phonetic,
+                    "dialect": dialect,
+                    "audio": audio_url,
+                    "index": index,
+                    "recordId": record_id,
+                    "showInResults": show_in_results
+                })
+
+            except Exception as e:
+                print(f"Error processing line: {line} - {e}")
+                continue
+
+        return {"contexts": contexts}
+
+    else:
+        raise ValueError(f"Unknown endpoint type: {endpoint_type}")
 
 
 
