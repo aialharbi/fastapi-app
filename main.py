@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.responses import FileResponse
 from gtts import gTTS
 import openai
+from openai import OpenAI
 import os
 import hashlib
 import logging
