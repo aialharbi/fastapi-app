@@ -757,3 +757,23 @@ async def get_contexts(word: str):
 
     # Return the parsed response
     return parsed_response
+
+
+
+@app.get("/files/{file_name}")
+async def get_file(file_name: str):
+    """
+    Serve the saved voice file without explicitly decoding the URL.
+    """
+    # Use the file_name directly as provided in the URL
+    file_path = os.path.join(SAVE_PATH, file_name)
+
+    logging.info(f"Requested file path: {file_path}")
+
+    # Check if the file exists
+    if os.path.exists(file_path):
+        logging.info(f"File found: {file_path}")
+        return FileResponse(file_path, media_type="audio/mpeg", filename=file_name)
+    
+    logging.error(f"File not found: {file_path}")
+    raise HTTPException(status_code=404, detail="File not found")
