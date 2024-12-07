@@ -103,7 +103,7 @@ async def get_audio(word: str):
 
 
 @ app.get("/getWordForms")
-async def get_word_forms_api(word: str, session: Session = Depends(get_session)):
+async def get_word_forms_api(word: str):
     """
     Endpoint to generate word forms for the given Arabic word.
     """
@@ -141,16 +141,13 @@ async def get_word_forms_api(word: str, session: Session = Depends(get_session))
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "wordForms")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="wordForms",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @ app.get("/getDialect")
-async def get_dialect_api(word: str, session: Session = Depends(get_session)):
+async def get_dialect_api(word: str):
     """
     Endpoint to get the dialect of the given Arabic word.
     """
@@ -167,16 +164,13 @@ async def get_dialect_api(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "dialect")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="dialect",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @ app.get("/getPhonetic")
-async def get_phonetic_api(word: str, session: Session = Depends(get_session)):
+async def get_phonetic_api(word: str):
     """
     Endpoint to get the phonetic representation of the given Arabic word. start with verbs and if the word not a verb return the noun
     """
@@ -192,16 +186,13 @@ async def get_phonetic_api(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "phonetic")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="phonetic",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @ app.get("/getStems")
-async def get_stems(word: str, session: Session = Depends(get_session)):
+async def get_stems(word: str):
     """
     Endpoint to return a list of stems for the given Arabic word.
     """
@@ -232,16 +223,12 @@ async def get_stems(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "stems")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="stems",
-                 response=parsed_response, session=session)
-
     # Return the parsed response
     return parsed_response
 
 
 @ app.get("/getDefinition")
-async def get_definition(word: str, session: Session = Depends(get_session)):
+async def get_definition(word: str):
     """
     Endpoint to fetch the definition of a given Arabic word.
     """
@@ -280,16 +267,13 @@ async def get_definition(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "definition")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="definition",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @app.get("/getSenseTranslation")
-async def get_sense_translation(word: str, session: Session = Depends(get_session)):
+async def get_sense_translation(word: str, session):
     """
     Endpoint to fetch translations for the given Arabic word.
     """
@@ -321,16 +305,13 @@ async def get_sense_translation(word: str, session: Session = Depends(get_sessio
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "translations")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="translations",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @app.get("/getExamples")
-async def get_examples(word: str, session: Session = Depends(get_session)):
+async def get_examples(word: str):
     """
     Endpoint to fetch examples for the given Arabic word.
     """
@@ -365,16 +346,13 @@ async def get_examples(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "examples")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="examples",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
 
 
 @app.get("/getContexts")
-async def get_contexts(word: str, session: Session = Depends(get_session)):
+async def get_contexts(word: str):
     """
     Endpoint to fetch contexts where the given Arabic word is used.
     """
@@ -407,9 +385,6 @@ async def get_contexts(word: str, session: Session = Depends(get_session)):
     # Parse the OpenAI response
     parsed_response = parse_response_to_json(result, "contexts")
 
-    # Save the parsed response in the database
-    save_request(word=word, endpoint="contexts",
-                 response=parsed_response, session=session)
 
     # Return the parsed response
     return parsed_response
